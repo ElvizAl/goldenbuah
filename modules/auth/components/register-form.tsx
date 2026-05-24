@@ -60,7 +60,7 @@ export function RegisterForm({
     }
 
     toast.success(result.message);
-    router.push("/login");
+    router.push(`/otp?email=${encodeURIComponent(values.email)}`);
   }
 
   async function handleGoogleRegister() {

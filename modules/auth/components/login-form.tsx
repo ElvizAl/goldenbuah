@@ -53,6 +53,9 @@ export function LoginForm({
 
     if (!result.success) {
       toast.error(result.message);
+      if (result.message.includes("belum terverifikasi") || result.message.includes("verifikasi email")) {
+        router.push(`/otp?email=${encodeURIComponent(values.email)}`);
+      }
       return;
     }
 
