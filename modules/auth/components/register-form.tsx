@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,12 +21,14 @@ import {
   type RegisterInput,
 } from "@/modules/auth/schema/auth.schema";
 import { registerAction } from "@/modules/auth/service/auth.service";
+import { authClient } from "../auth-client";
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter();
+  const [isGooglePending, setIsGooglePending] = useState(false);
 
   const {
     register,
@@ -60,6 +63,22 @@ export function RegisterForm({
     router.push("/login");
   }
 
+  async function handleGoogleRegister() {
+    setIsGooglePending(true);
+
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+
+    if (error) {
+      toast.error(error.message || "Register Google gagal.");
+      setIsGooglePending(false);
+    }
+  }
+
+  const isLoading = isSubmitting || isGooglePending;
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -82,6 +101,7 @@ export function RegisterForm({
             placeholder="John Doe"
             className="bg-background"
             aria-invalid={!!errors.name}
+            disabled={isLoading}
             {...register("name")}
           />
           {errors.name?.message && (
@@ -99,6 +119,7 @@ export function RegisterForm({
             placeholder="m@example.com"
             className="bg-background"
             aria-invalid={!!errors.email}
+            disabled={isLoading}
             {...register("email")}
           />
           {errors.email?.message && (
@@ -115,6 +136,7 @@ export function RegisterForm({
             type="password"
             className="bg-background"
             aria-invalid={!!errors.password}
+            disabled={isLoading}
             {...register("password")}
           />
           {errors.password?.message && (
@@ -133,6 +155,7 @@ export function RegisterForm({
             type="password"
             className="bg-background"
             aria-invalid={!!errors.confirmPassword}
+            disabled={isLoading}
             {...register("confirmPassword")}
           />
           {errors.confirmPassword?.message && (
@@ -143,7 +166,7 @@ export function RegisterForm({
         </Field>
 
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isLoading}>
             {isSubmitting ? "Mendaftarkan..." : "Daftar"}
           </Button>
         </Field>
@@ -151,8 +174,14 @@ export function RegisterForm({
         <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
 
         <Field>
-          <Button variant="outline" type="button" className="w-full">
-            Daftar dengan Google
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full"
+            disabled={isLoading}
+            onClick={handleGoogleRegister}
+          >
+            {isGooglePending ? "Menghubungkan..." : "Daftar dengan Google"}
           </Button>
 
           <FieldDescription className="text-center">

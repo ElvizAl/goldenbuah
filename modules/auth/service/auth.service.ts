@@ -2,9 +2,8 @@
 
 import z from "zod";
 import { auth } from "../auth.config";
-import { loginSchema, registerSchema } from "../schema/auth.schema";
+import { loginSchema, registerSchema } from "@/modules/auth/schema/auth.schema";
 import prisma from "@/shared/lib/prisma";
-import { redirect } from "next/navigation";
 
 export async function registerAction(
   formData: FormData

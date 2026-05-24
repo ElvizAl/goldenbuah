@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,12 +22,14 @@ import {
   type LoginInput,
 } from "@/modules/auth/schema/auth.schema";
 import { loginAction } from "@/modules/auth/service/auth.service";
+import { authClient } from "@/modules/auth/auth-client";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter();
+  const [isGooglePending, setIsGooglePending] = useState(false);
 
   const {
     register,
@@ -57,6 +60,22 @@ export function LoginForm({
     router.push("/");
   }
 
+  async function handleGoogleLogin() {
+    setIsGooglePending(true);
+
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    });
+
+    if (error) {
+      toast.error(error.message || "Login Google gagal.");
+      setIsGooglePending(false);
+    }
+  }
+
+  const isLoading = isSubmitting || isGooglePending;
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -79,6 +98,7 @@ export function LoginForm({
             placeholder="m@example.com"
             className="bg-background"
             aria-invalid={!!errors.email}
+            disabled={isLoading}
             {...register("email")}
           />
           {errors.email?.message && (
@@ -104,6 +124,7 @@ export function LoginForm({
             type="password"
             className="bg-background"
             aria-invalid={!!errors.password}
+            disabled={isLoading}
             {...register("password")}
           />
           {errors.password?.message && (
@@ -114,7 +135,7 @@ export function LoginForm({
         </Field>
 
         <Field>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isLoading}>
             {isSubmitting ? "Memproses..." : "Masuk"}
           </Button>
         </Field>
@@ -122,7 +143,13 @@ export function LoginForm({
         <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
 
         <Field>
-          <Button variant="outline" type="button" className="w-full">
+          <Button
+            variant="outline"
+            type="button"
+            className="w-full"
+            disabled={isLoading}
+            onClick={handleGoogleLogin}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -141,7 +168,7 @@ export function LoginForm({
                 fill="#EA4335"
               />
             </svg>
-            Masuk dengan Google
+            {isGooglePending ? "Menghubungkan..." : "Masuk dengan Google"}
           </Button>
 
           <FieldDescription className="text-center">

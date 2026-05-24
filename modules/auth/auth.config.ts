@@ -12,6 +12,7 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     autoSignIn: false,
   },
+  trustedOrigins: [process.env.NEXT_PUBLIC_BASE_URL as string],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
