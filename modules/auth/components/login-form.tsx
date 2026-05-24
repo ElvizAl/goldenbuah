@@ -1,20 +1,65 @@
-import { cn } from "@/shared/lib/utils"
-import { Button } from "@/shared/components/ui/button"
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/shared/components/ui/field"
-import { Input } from "@/shared/components/ui/input"
+} from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
+
+import {
+  loginSchema,
+  type LoginInput,
+} from "@/modules/auth/schema/auth.schema";
+import { loginAction } from "@/modules/auth/service/auth.service";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const router = useRouter();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values: LoginInput) {
+    const formData = new FormData();
+
+    formData.append("email", values.email);
+    formData.append("password", values.password);
+
+    const result = await loginAction(formData);
+
+    if (!result.success) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success(result.message);
+    router.push("/");
+  }
+
   return (
     <form
+      onSubmit={handleSubmit(onSubmit)}
       className={cn("flex flex-col gap-6", className)}
       {...props}
     >
@@ -30,11 +75,17 @@ export function LoginForm({
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
-            name="email"
             type="email"
             placeholder="m@example.com"
             className="bg-background"
+            aria-invalid={!!errors.email}
+            {...register("email")}
           />
+          {errors.email?.message && (
+            <p className="text-sm text-destructive">
+              {errors.email.message}
+            </p>
+          )}
         </Field>
 
         <Field>
@@ -50,14 +101,22 @@ export function LoginForm({
 
           <Input
             id="password"
-            name="password"
             type="password"
             className="bg-background"
+            aria-invalid={!!errors.password}
+            {...register("password")}
           />
+          {errors.password?.message && (
+            <p className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
         </Field>
 
         <Field>
-          <Button type="submit">Masuk</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Memproses..." : "Masuk"}
+          </Button>
         </Field>
 
         <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
@@ -94,5 +153,5 @@ export function LoginForm({
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }
