@@ -41,7 +41,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    nextCookies(),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         if (type === "email-verification") {
@@ -81,6 +80,7 @@ export const auth = betterAuth({
         }
       },
     }),
+    nextCookies(),
   ],
 });
 

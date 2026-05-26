@@ -1,3 +1,5 @@
+"use server";
+
 import { auth } from "./auth.config";
 import { headers } from "next/headers";
 
@@ -18,7 +20,7 @@ export async function getSession() {
  */
 export async function getUser() {
   const session = await getSession();
-  return session?.user ?? null;
+  return session?.user;
 }
 
 /**
