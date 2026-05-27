@@ -31,8 +31,10 @@ model User {
   banReason     String?
   banExpires    DateTime?
 
-  sessions Session[]
-  accounts Account[]
+  sessions  Session[]
+  accounts  Account[]
+  profile   Profile?
+  addresses Address[]
 
   @@map("users")
 }
@@ -85,4 +87,68 @@ model Verification {
   expiresAt  DateTime
 
   @@map("verifications")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model Profile {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  fullName  String?
+  phone     String?
+  gender    Gender?
+  birthDate DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([phone])
+}
+
+enum AddressType {
+  HOME
+  WORK
+  WAREHOUSE
+  OTHER
+}
+
+model Address {
+  id     String @id @default(uuid())
+  userId String
+
+  label         AddressType
+  recipientName String
+  phone         String
+
+  fullAddress String @db.Text // Jl, nomor rumah, RT/RW, patokan
+
+  provinceId   String?
+  provinceName String?
+
+  cityId   String?
+  cityName String?
+
+  districtId   String?
+  districtName String?
+
+  subdistrictId   String?
+  subdistrictName String?
+
+  postalCode String?
+
+  isDefault Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([provinceId])
+  @@index([cityId])
+  @@index([districtId])
+  @@index([subdistrictId])
 }

@@ -97,16 +97,9 @@ export function UserNav() {
         </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
-          <Link href="/cart" className="cursor-pointer flex items-center">
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Keranjang Belanja
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer flex items-center">
+          <Link href="/profile" className="cursor-pointer flex items-center">
             <Settings className="mr-2 h-4 w-4" />
-            Pengaturan
+            Pengaturan Akun
           </Link>
         </DropdownMenuItem>
 
