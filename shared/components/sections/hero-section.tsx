@@ -18,7 +18,7 @@ export const HeroSection = () => {
                         </p>
                         <div className="flex flex-col gap-2 min-[400px]:flex-row">
                             <Link href="/produk">
-                                <Button size="lg" className="cursor-pointer bg-[#2f392a] px-5 py-5">
+                                <Button size="lg" className="cursor-pointer bg-[#01BC1D] px-5 py-5">
                                     Belanja Sekarang
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>

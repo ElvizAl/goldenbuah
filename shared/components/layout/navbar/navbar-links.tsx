@@ -28,19 +28,61 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
 const navbarItems = [
     { href: "/", children: "Home" },
     { href: "/produk", children: "Produk" },
-    { href: "/kontak", children: "Kontak" },
-    { href: "/Maps", children: "Maps" },
+    { href: "/#kontak", children: "Kontak" },
+    { href: "/#maps", children: "Maps" },
 ]
+
+import { useEffect, useState } from "react"
 
 export const NavbarLink = () => {
     const pathname = usePathname()
+    const [activeHash, setActiveHash] = useState("")
+
+    useEffect(() => {
+        // Update hash state initially
+        setActiveHash(window.location.hash)
+
+        const handleHashChange = () => {
+            setActiveHash(window.location.hash)
+        }
+
+        // Listen for browser navigation hash change
+        window.addEventListener("hashchange", handleHashChange)
+
+        // Capture Any link clicks to update hash instantly
+        const handleLinkClick = () => {
+            // Need a tiny delay for Next.js to update the URL / window.location
+            setTimeout(() => {
+                setActiveHash(window.location.hash)
+            }, 50)
+        }
+
+        window.addEventListener("click", handleLinkClick)
+
+        return () => {
+            window.removeEventListener("hashchange", handleHashChange)
+            window.removeEventListener("click", handleLinkClick)
+        }
+    }, [pathname])
+
     return (
         <div className="flex items-center space-x-4">
-            {navbarItems.map((item) => (
-                <NavbarItem key={item.href} href={item.href} isActive={pathname === item.href}>
-                    {item.children}
-                </NavbarItem>
-            ))}
+            {navbarItems.map((item) => {
+                let isActive = false
+
+                if (item.href.startsWith("/#")) {
+                    const targetHash = item.href.replace("/", "") // e.g. "#kontak"
+                    isActive = pathname === "/" && activeHash === targetHash
+                } else {
+                    isActive = pathname === item.href && (pathname !== "/" || !activeHash || activeHash === "#")
+                }
+
+                return (
+                    <NavbarItem key={item.href} href={item.href} isActive={isActive}>
+                        {item.children}
+                    </NavbarItem>
+                )
+            })}
         </div>
     )
 }
