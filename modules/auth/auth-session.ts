@@ -1,7 +1,8 @@
 "use server";
 
 import { auth } from "./auth.config";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 /**
  * Get the current session on the server side.
@@ -33,4 +34,25 @@ export async function requireAuth() {
     throw new Error("Unauthorized");
   }
   return session;
+}
+
+/**
+ * Sign out the user on the server side and clear cookies, then redirect to login.
+ */
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  
+  try {
+    await auth.api.signOut({
+      headers: await headers(),
+    });
+  } catch (error) {
+    console.error("Sign out API error:", error);
+  }
+
+  // Clear better-auth session cookies safely for dev and production
+  cookieStore.delete("better-auth.session_token");
+  cookieStore.delete("__Secure-better-auth.session_token");
+
+  redirect("/admin/login");
 }
