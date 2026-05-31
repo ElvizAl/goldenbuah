@@ -6,21 +6,95 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/shared/lib/prisma";
 import { productSchema } from "@/modules/product/schema/product.schema";
 
-export async function getProducts() {
+export async function getFeaturedProducts(limit: number = 6) {
   try {
     const products = await prisma.product.findMany({
+      where: {
+        stock: {
+          gt: 0,
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
       include: {
         category: true,
       },
+      take: limit,
     });
+
+    // Convert Decimal fields to plain numbers for Client Component serialization
+    const serializedProducts = products.map((product) => ({
+      ...product,
+      price: Number(product.price),
+    }));
+
+    return {
+      success: true,
+      message: "Produk unggulan berhasil dimuat.",
+      data: serializedProducts,
+    };
+  } catch (error) {
+    console.error("Get featured products error:", error);
+
+    return {
+      success: false,
+      message: "Gagal memuat produk unggulan.",
+      data: [],
+    };
+  }
+}
+
+export async function getProducts(options?: { query?: string; categoryId?: string; page?: number; limit?: number }) {
+  try {
+    const page = options?.page || 1;
+    const limit = options?.limit || 9; // Show 9 items per page (3x3 grid)
+    const skip = (page - 1) * limit;
+
+    const whereClause = {
+      ...(options?.categoryId ? { categoryId: options.categoryId } : {}),
+      ...(options?.query
+        ? {
+            OR: [
+              { name: { contains: options.query, mode: "insensitive" as const } },
+              { description: { contains: options.query, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    };
+
+    const [totalCount, products] = await Promise.all([
+      prisma.product.count({ where: whereClause }),
+      prisma.product.findMany({
+        where: whereClause,
+        orderBy: {
+          createdAt: "desc",
+        },
+        include: {
+          category: true,
+        },
+        take: limit,
+        skip: skip,
+      })
+    ]);
+
+    // Convert Decimal fields to plain numbers for Client Component serialization
+    const serializedProducts = products.map((product) => ({
+      ...product,
+      price: Number(product.price),
+    }));
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     return {
       success: true,
       message: "Produk berhasil dimuat.",
-      data: products,
+      data: serializedProducts,
+      pagination: {
+        totalItems: totalCount,
+        totalPages: totalPages === 0 ? 1 : totalPages,
+        currentPage: page,
+      }
     };
   } catch (error) {
     console.error("Get products error:", error);
@@ -70,6 +144,7 @@ export async function createProductAction(formData: FormData) {
     });
 
     revalidatePath("/admin/dashboard/products");
+    revalidatePath("/");
 
     return {
       success: true,
@@ -128,6 +203,7 @@ export async function updateProductAction(
     });
 
     revalidatePath("/admin/dashboard/products");
+    revalidatePath("/");
 
     return {
       success: true,
@@ -152,6 +228,7 @@ export async function deleteProductAction(productId: string) {
     });
 
     revalidatePath("/admin/dashboard/products");
+    revalidatePath("/");
 
     return {
       success: true,
