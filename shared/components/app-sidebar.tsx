@@ -57,13 +57,13 @@ const data = {
           icon: <TagIcon className="text-amber-500" />,
         },
         {
-          title: "Pelanggan Terdaftar",
-          url: "#",
+          title: "Manajemen Pengguna",
+          url: "/admin/dashboard/users",
           icon: <UsersIcon className="text-indigo-500" />,
         },
         {
           title: "Alamat Pengiriman",
-          url: "#",
+          url: "/admin/dashboard/addresses",
           icon: <MapPinIcon className="text-rose-500" />,
         },
       ],
