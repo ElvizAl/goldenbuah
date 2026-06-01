@@ -1,7 +1,9 @@
 import { NavbarLink } from "@/shared/components/layout/navbar/navbar-links";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
 import { UserNav } from "./user-nav";
+import { CartBadge } from "@/modules/cart/components/cart-badge";
+import { Suspense } from "react";
+import { ShoppingBag } from "lucide-react";
 
 export default function Navbar() {
   return (
@@ -44,9 +46,15 @@ export default function Navbar() {
           <div className="flex items-center">
             <div className="flex-row items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div>
-                  <ShoppingBag />
-                </div>
+                <Suspense
+                  fallback={
+                    <div className="relative inline-flex items-center">
+                      <ShoppingBag className="h-6 w-6 text-neutral-700" />
+                    </div>
+                  }
+                >
+                  <CartBadge />
+                </Suspense>
                 <UserNav />
               </div>
             </div>

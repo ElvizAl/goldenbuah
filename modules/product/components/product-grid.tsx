@@ -6,11 +6,11 @@ import Image from "next/image"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 import { Card, CardContent } from "@/shared/components/ui/card"
-import { Button } from "@/shared/components/ui/button"
 import { Badge } from "@/shared/components/ui/badge"
 import { Input } from "@/shared/components/ui/input"
 import { ProductCategories } from "@/modules/product/components/product-categories"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/shared/components/ui/pagination"
+import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button"
 
 function formatRupiah(value: number | string) {
     return new Intl.NumberFormat("id-ID", {
@@ -231,13 +231,11 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
                                 </div>
 
                                 <div className="mt-auto -bottom-5 pt-4 flex items-center justify-between">
-                                    <Button
-                                        size="sm"
-                                        disabled={product.stock === 0}
-                                        className="h-8 rounded-full bg-[#01BC1D] px-6 text-xs font-bold text-white hover:bg-[#0d9622] transition-colors"
-                                    >
-                                        Add
-                                    </Button>
+                                    <AddToCartButton
+                                        productId={product.id}
+                                        productName={product.name}
+                                        stock={product.stock}
+                                    />
 
                                     <div className="text-right">
                                         <p className="text-sm font-extrabold text-green-700">

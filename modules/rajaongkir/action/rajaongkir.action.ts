@@ -2,6 +2,7 @@
 
 import {
   getCitiesByProvince,
+  getCourierCost,
   getDistrictsByCity,
   getProvinces,
   getSubdistrictsByDistrict,
@@ -107,6 +108,39 @@ export async function getSubdistrictsAction(districtId: string) {
       success: false,
       message: "Gagal memuat kelurahan.",
       data: [],
+    };
+  }
+}
+
+export async function getCourierCostAction(params: {
+  originDistrictId: string;
+  destinationDistrictId: string;
+  weight: number;
+  courier: string;
+}) {
+  if (!params.originDistrictId || !params.destinationDistrictId) {
+    return {
+      success: false,
+      message: "Origin dan destination wajib diisi.",
+      data: null,
+    };
+  }
+
+  try {
+    const data = await getCourierCost(params);
+
+    return {
+      success: true,
+      message: "Ongkir berhasil dihitung.",
+      data,
+    };
+  } catch (error) {
+    console.error("Get courier cost error:", error);
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Gagal menghitung ongkir.",
+      data: null,
     };
   }
 }
