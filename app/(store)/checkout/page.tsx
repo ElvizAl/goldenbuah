@@ -31,6 +31,9 @@ export default async function CheckoutPage() {
     0
   );
 
+  // Baca dari server env (bukan NEXT_PUBLIC) agar selalu akurat
+  const originDistrictId = process.env.ORIGIN_DISTRICT_ID ?? "455";
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Checkout</h1>
@@ -40,6 +43,7 @@ export default async function CheckoutPage() {
         subtotal={subtotal}
         totalWeight={totalWeight}
         userName={user.name}
+        originDistrictId={originDistrictId}
       />
     </div>
   );

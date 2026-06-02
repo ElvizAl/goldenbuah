@@ -16,8 +16,10 @@ import {
 
 import { getUser } from "@/modules/auth/auth-session";
 import { getOrderDetail } from "@/modules/orders/service/order.service";
+import { getPaymentInfo } from "@/modules/orders/service/payment.service";
 import { OrderStatusBadge } from "@/modules/orders/components/order-status-badge";
 import { CancelOrderButton } from "@/modules/orders/components/cancel-order-button";
+import { PaymentForm } from "@/modules/orders/components/payment-form";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,6 +35,9 @@ export default async function OrderDetailPage({ params }: Props) {
   if (!order) notFound();
 
   const canCancel = ["PENDING", "WAITING_CONFIRMATION"].includes(order.status);
+  const canPay = order.status === "PENDING";
+
+  const paymentInfo = await getPaymentInfo();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -57,6 +62,19 @@ export default async function OrderDetailPage({ params }: Props) {
         </div>
         <OrderStatusBadge status={order.status as never} />
       </div>
+
+      {/* Payment Form / Status */}
+      {(canPay || order.payment) && (
+        <div className="mb-4">
+          <PaymentForm
+            orderId={order.id}
+            total={order.total}
+            bankAccounts={paymentInfo.bankAccounts}
+            qrisImageUrl={paymentInfo.qrisImageUrl}
+            existingPayment={order.payment}
+          />
+        </div>
+      )}
 
       {/* Fulfillment info */}
       <div className="mb-4 rounded-xl border bg-white p-4">

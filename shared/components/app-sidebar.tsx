@@ -21,7 +21,7 @@ import {
   MapPinIcon,
   ShoppingCartIcon,
   FileTextIcon,
-  SettingsIcon,
+  CreditCardIcon,
   StoreIcon
 } from "lucide-react"
 
@@ -73,8 +73,13 @@ const data = {
       items: [
         {
           title: "Daftar Pesanan",
-          url: "#",
+          url: "/admin/dashboard/orders",
           icon: <ShoppingCartIcon className="text-cyan-500" />,
+        },
+        {
+          title: "Pembayaran",
+          url: "/admin/dashboard/payments",
+          icon: <CreditCardIcon className="text-violet-500" />,
         },
       ],
     },
@@ -83,8 +88,13 @@ const data = {
       items: [
         {
           title: "Laporan Penjualan",
-          url: "#",
+          url: "/admin/dashboard/reports/sales",
           icon: <FileTextIcon className="text-orange-500" />,
+        },
+        {
+          title: "Produk Terlaris",
+          url: "/admin/dashboard/reports/products",
+          icon: <AppleIcon className="text-pink-500" />,
         },
       ],
     }

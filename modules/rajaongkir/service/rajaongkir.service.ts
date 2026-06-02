@@ -164,7 +164,10 @@ export async function getCourierCost(params: {
   }
 
   if (!response.ok) {
-    console.error("RajaOngkir cost error:", result);
+    // 404 = kurir tidak support rute ini, throw tanpa log agar tidak spam
+    if (response.status !== 404) {
+      console.error("RajaOngkir cost error:", result);
+    }
     throw new Error(result?.meta?.message || result?.message || "Gagal menghitung ongkir");
   }
 

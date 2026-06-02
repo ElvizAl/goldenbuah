@@ -19,7 +19,7 @@ export const createOrderSchema = z.object({
 
   // Info penerima / pengambil
   recipientName: z.string().min(1, "Nama penerima wajib diisi"),
-  phone: z.string().min(1, "Nomor telepon wajib diisi"),
+  phone: z.string().optional().nullable().default(""),
 
   note: z.string().optional().nullable(),
 });

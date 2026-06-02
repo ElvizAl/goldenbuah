@@ -12,6 +12,13 @@ function generateOrderCode() {
   return `GF-${nanoid(8).toUpperCase()}`;
 }
 
+function generatePickupCode() {
+  return `PU-${nanoid(6).toUpperCase()}`;
+}
+
+const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME ?? "Golden Buah";
+const STORE_ADDRESS = process.env.NEXT_PUBLIC_STORE_ADDRESS ?? "";
+
 // ─── Create Order dari Cart ───────────────────────────────────────────────
 export async function createOrderAction(formData: FormData) {
   const user = await getUser();
@@ -114,6 +121,16 @@ export async function createOrderAction(formData: FormData) {
         }
       }
 
+      // Set pickup fields kalau PICKUP
+      const pickupFields =
+        data.fulfillmentType === "PICKUP"
+          ? {
+              pickupCode: generatePickupCode(),
+              pickupStoreName: STORE_NAME,
+              pickupStoreAddress: STORE_ADDRESS || null,
+            }
+          : {};
+
       // Buat order
       const order = await tx.order.create({
         data: {
@@ -135,9 +152,10 @@ export async function createOrderAction(formData: FormData) {
           totalWeight,
 
           recipientName: data.recipientName,
-          phone: data.phone,
+          phone: data.phone ?? "",
 
           ...addressSnapshot,
+          ...pickupFields,
 
           note: data.note,
 

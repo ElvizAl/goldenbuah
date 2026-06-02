@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Package, Truck, Store, MapPin } from "lucide-react";
 
 import { createOrderAction } from "@/modules/orders/service/order.service";
-import { getCourierCostAction } from "@/modules/rajaongkir/action/rajaongkir.action";
+import { getAllCourierCostAction } from "@/modules/rajaongkir/action/rajaongkir.action";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface CartItem {
@@ -45,11 +45,12 @@ interface Cart {
 }
 
 interface CourierService {
+  name: string;
+  code: string;
   service: string;
   description: string;
   cost: number;
   etd: string;
-  note: string;
 }
 
 interface CheckoutFormProps {
@@ -58,19 +59,10 @@ interface CheckoutFormProps {
   subtotal: number;
   totalWeight: number;
   userName: string;
+  originDistrictId: string;
 }
 
 // ─── Konstanta ────────────────────────────────────────────────────────────
-const COURIERS = [
-  { code: "jne", name: "JNE" },
-  { code: "jnt", name: "J&T Express" },
-  { code: "sicepat", name: "SiCepat" },
-  { code: "anteraja", name: "AnterAja" },
-  { code: "wahana", name: "Wahana" },
-];
-
-// Ganti dengan district ID toko (origin pengiriman)
-const ORIGIN_DISTRICT_ID = process.env.NEXT_PUBLIC_STORE_DISTRICT_ID ?? "1101";
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME ?? "Golden Buah Store";
 const STORE_ADDRESS = process.env.NEXT_PUBLIC_STORE_ADDRESS ?? "";
 
@@ -80,6 +72,7 @@ export function CheckoutForm({
   subtotal,
   totalWeight,
   userName,
+  originDistrictId,
 }: CheckoutFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -91,7 +84,6 @@ export function CheckoutForm({
   const [selectedAddressId, setSelectedAddressId] = useState<string>(
     addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? ""
   );
-  const [selectedCourier, setSelectedCourier] = useState("");
   const [courierServices, setCourierServices] = useState<CourierService[]>([]);
   const [selectedService, setSelectedService] = useState<CourierService | null>(null);
   const [loadingCourier, setLoadingCourier] = useState(false);
@@ -99,14 +91,10 @@ export function CheckoutForm({
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
 
-  // Hitung ongkir
+  // Hitung semua ongkir sekaligus
   async function handleGetCost() {
     if (!selectedAddress?.districtId) {
       toast.error("Alamat tidak memiliki data kecamatan untuk menghitung ongkir.");
-      return;
-    }
-    if (!selectedCourier) {
-      toast.error("Pilih kurir terlebih dahulu.");
       return;
     }
 
@@ -114,11 +102,10 @@ export function CheckoutForm({
     setSelectedService(null);
     setCourierServices([]);
 
-    const result = await getCourierCostAction({
-      originDistrictId: ORIGIN_DISTRICT_ID,
+    const result = await getAllCourierCostAction({
+      originDistrictId,
       destinationDistrictId: selectedAddress.districtId,
       weight: totalWeight,
-      courier: selectedCourier,
     });
 
     setLoadingCourier(false);
@@ -128,22 +115,7 @@ export function CheckoutForm({
       return;
     }
 
-    const services: CourierService[] = (result.data?.services ?? []).map(
-      (s: { service: string; description: string; cost: number; etd: string }) => ({
-        service: s.service,
-        description: s.description,
-        cost: s.cost,
-        etd: s.etd,
-        note: "",
-      })
-    );
-
-    if (services.length === 0) {
-      toast.error("Tidak ada layanan kurir yang tersedia untuk rute ini.");
-      return;
-    }
-
-    setCourierServices(services);
+    setCourierServices(result.data.services as CourierService[]);
   }
 
   // Submit order
@@ -159,8 +131,6 @@ export function CheckoutForm({
       }
     }
 
-    const courier = COURIERS.find((c) => c.code === selectedCourier);
-
     startTransition(async () => {
       const formData = new FormData();
       formData.set("fulfillmentType", fulfillmentType);
@@ -170,10 +140,10 @@ export function CheckoutForm({
 
       if (fulfillmentType === "DELIVERY" && selectedAddress && selectedService) {
         formData.set("addressId", selectedAddress.id);
-        formData.set("courierCode", selectedCourier);
-        formData.set("courierName", courier?.name ?? selectedCourier);
+        formData.set("courierCode", selectedService.code ?? "");
+        formData.set("courierName", selectedService.name ?? "");
         formData.set("courierService", selectedService.service);
-        formData.set("courierEtd", selectedService.etd);
+        formData.set("courierEtd", selectedService.etd ?? "");
         formData.set("shipping", String(selectedService.cost));
       } else {
         // PICKUP
@@ -314,53 +284,37 @@ export function CheckoutForm({
               </div>
             )}
 
-            {/* Pilih Kurir */}
+            {/* Cek Ongkir */}
             {selectedAddress && (
               <div className="mt-4 border-t pt-4">
-                <h3 className="mb-2 text-sm font-semibold text-gray-700">
-                  Pilih Kurir
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {COURIERS.map((c) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCourier(c.code);
-                        setSelectedService(null);
-                        setCourierServices([]);
-                      }}
-                      className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
-                        selectedCourier === c.code
-                          ? "border-yellow-400 bg-yellow-50 text-yellow-800"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Pilih Layanan Pengiriman
+                    </h3>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      Berat: <span className="font-medium text-gray-600">{totalWeight} gram ({(totalWeight / 1000).toFixed(2)} kg)</span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGetCost}
+                    disabled={loadingCourier}
+                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200 disabled:opacity-50"
+                  >
+                    {loadingCourier ? "Mencari..." : courierServices.length > 0 ? "Refresh" : "Cek Ongkir"}
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleGetCost}
-                  disabled={!selectedCourier || loadingCourier}
-                  className="mt-3 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                >
-                  {loadingCourier ? "Menghitung..." : "Cek Ongkir"}
-                </button>
 
                 {/* Pilih Layanan */}
                 {courierServices.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-700">
-                      Pilih Layanan
-                    </h3>
-                    {courierServices.map((svc) => (
+                    {courierServices.map((svc, idx) => (
                       <label
-                        key={svc.service}
+                        key={`${svc.code}-${svc.service}-${idx}`}
                         className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 text-sm transition ${
-                          selectedService?.service === svc.service
+                          selectedService?.service === svc.service &&
+                          selectedService?.code === svc.code
                             ? "border-yellow-400 bg-yellow-50"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
@@ -369,25 +323,28 @@ export function CheckoutForm({
                           <input
                             type="radio"
                             name="courierService"
-                            checked={selectedService?.service === svc.service}
+                            checked={
+                              selectedService?.service === svc.service &&
+                              selectedService?.code === svc.code
+                            }
                             onChange={() => setSelectedService(svc)}
                             className="accent-yellow-400"
                           />
                           <div>
                             <span className="font-medium text-gray-900">
-                              {svc.service}
+                              {svc.name}
                             </span>
                             <span className="ml-1 text-gray-500">
-                              — {svc.description}
+                              {svc.service} — {svc.description}
                             </span>
                             {svc.etd && (
                               <span className="ml-1 text-xs text-gray-400">
-                                ({svc.etd} hari)
+                                ({svc.etd})
                               </span>
                             )}
                           </div>
                         </div>
-                        <span className="font-semibold text-gray-900">
+                        <span className="ml-3 flex-shrink-0 font-semibold text-gray-900">
                           Rp {svc.cost.toLocaleString("id-ID")}
                         </span>
                       </label>
@@ -515,7 +472,7 @@ export function CheckoutForm({
 
           {fulfillmentType === "DELIVERY" && !selectedService && (
             <p className="mt-2 text-center text-xs text-gray-400">
-              Pilih alamat &amp; kurir untuk melanjutkan
+              Pilih alamat &amp; cek ongkir untuk melanjutkan
             </p>
           )}
         </div>

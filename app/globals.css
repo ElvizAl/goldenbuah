@@ -129,3 +129,70 @@
     scroll-behavior: smooth;
   }
 }
+
+/* ─── Print / PDF Export ─── */
+@media print {
+  /* Hide everything that is not part of the report content */
+  .no-print,
+  nav,
+  aside,
+  [data-sidebar],
+  [data-slot="sidebar"],
+  [data-slot="sidebar-inset"] > header,
+  header {
+    display: none !important;
+  }
+
+  /* Reset page margins and background */
+  @page {
+    margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Make the inset content fill the page */
+  [data-slot="sidebar-inset"],
+  .flex-1 {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Avoid page breaks inside cards and table rows */
+  .card,
+  tr,
+  .avoid-break {
+    break-inside: avoid;
+  }
+
+  /* Make sure tables print with borders */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #e5e7eb;
+    padding: 6px 8px;
+    font-size: 9pt;
+  }
+
+  /* Remove box shadows for print */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Keep color backgrounds (badge colors etc.) */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -144,3 +144,60 @@ export async function getCourierCostAction(params: {
     };
   }
 }
+
+const ALL_COURIERS = ["jne", "jnt", "sicepat", "anteraja", "wahana", "pos", "tiki", "lion", "ninja"];
+const EXCLUDED_SERVICES = ["JTR", "JTR<130", "JTR>130", "JTR>200", "CARGO"];
+
+export async function getAllCourierCostAction(params: {
+  originDistrictId: string;
+  destinationDistrictId: string;
+  weight: number;
+}) {
+  if (!params.originDistrictId || !params.destinationDistrictId) {
+    return {
+      success: false,
+      message: "Origin dan destination wajib diisi.",
+      data: null,
+    };
+  }
+
+  try {
+    const results = await Promise.allSettled(
+      ALL_COURIERS.map((courier) => getCourierCost({ ...params, courier }))
+    );
+
+    const allServices = results.flatMap((result) => {
+      if (result.status === "fulfilled") {
+        return (result.value.services ?? []).filter(
+          (s) => !EXCLUDED_SERVICES.includes(s.service)
+        );
+      }
+      return [];
+    });
+
+    if (allServices.length === 0) {
+      return {
+        success: false,
+        message: "Tidak ada layanan kurir yang tersedia untuk rute ini.",
+        data: null,
+      };
+    }
+
+    // Sort by price ascending
+    allServices.sort((a, b) => a.cost - b.cost);
+
+    return {
+      success: true,
+      message: "Ongkir berhasil dihitung.",
+      data: { services: allServices },
+    };
+  } catch (error) {
+    console.error("Get all courier cost error:", error);
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Gagal menghitung ongkir.",
+      data: null,
+    };
+  }
+}
