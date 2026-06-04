@@ -28,13 +28,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const maxSize = 2 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
     if (file.size > maxSize) {
       return NextResponse.json(
         {
           success: false,
-          message: "Ukuran gambar maksimal 2MB.",
+          message: "Ukuran gambar maksimal 5MB.",
         },
         { status: 400 }
       );

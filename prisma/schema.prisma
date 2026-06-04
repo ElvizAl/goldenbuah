@@ -73,6 +73,7 @@ model User {
   addresses Address[]
   cart      Cart?
   orders    Order[]
+  reviews   Review[]
 
   @@map("users")
 }
@@ -211,6 +212,7 @@ model Product {
 
   cartItems  CartItem[]
   orderItems OrderItem[]
+  reviews    Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -301,6 +303,7 @@ model Order {
 
   items   OrderItem[]
   payment Payment?
+  reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -331,6 +334,29 @@ model OrderItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  orderId   String
+  productId String
+
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  imageUrl  String?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, orderId, productId])
+  @@index([userId])
   @@index([orderId])
   @@index([productId])
 }

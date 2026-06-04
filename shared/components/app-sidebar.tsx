@@ -22,7 +22,8 @@ import {
   ShoppingCartIcon,
   FileTextIcon,
   CreditCardIcon,
-  StoreIcon
+  StoreIcon,
+  StarIcon,
 } from "lucide-react"
 
 const data = {
@@ -65,6 +66,11 @@ const data = {
           title: "Alamat Pengiriman",
           url: "/admin/dashboard/addresses",
           icon: <MapPinIcon className="text-rose-500" />,
+        },
+        {
+          title: "Ulasan Produk",
+          url: "/admin/dashboard/reviews",
+          icon: <StarIcon className="text-amber-500" />,
         },
       ],
     },

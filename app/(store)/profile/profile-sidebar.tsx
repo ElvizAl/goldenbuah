@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, ClipboardList, PenTool, Map } from "lucide-react";
+import { User, ClipboardList, Star, Map } from "lucide-react";
 
-export function ProfileSidebar() {
+interface ProfileSidebarProps {
+  pendingReviews?: number;
+}
+
+export function ProfileSidebar({ pendingReviews = 0 }: ProfileSidebarProps) {
   const pathname = usePathname();
 
   const menus = [
@@ -24,9 +28,10 @@ export function ProfileSidebar() {
       icon: ClipboardList,
     },
     {
-      label: "Review",
+      label: "Ulasan Saya",
       href: "/profile/reviews",
-      icon: PenTool,
+      icon: Star,
+      badge: pendingReviews > 0 ? pendingReviews : undefined,
     },
   ];
 
@@ -56,7 +61,12 @@ export function ProfileSidebar() {
                     isActive ? "text-cyan-500" : "text-neutral-400"
                   }`}
                 />
-                <span className="font-medium">{menu.label}</span>
+                <span className="flex-1 font-medium">{menu.label}</span>
+                {"badge" in menu && menu.badge !== undefined && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white leading-none">
+                    {menu.badge > 99 ? "99+" : menu.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

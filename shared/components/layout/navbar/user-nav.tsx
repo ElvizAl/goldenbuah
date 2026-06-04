@@ -90,7 +90,7 @@ export function UserNav() {
         )}
 
         <DropdownMenuItem asChild>
-          <Link href="/orders" className="cursor-pointer flex items-center">
+          <Link href="/profile/orders" className="cursor-pointer flex items-center">
             <Package className="mr-2 h-4 w-4" />
             Pesanan Saya
           </Link>

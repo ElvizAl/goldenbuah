@@ -155,7 +155,7 @@ export function CheckoutForm({
 
       if (result.success && result.data?.orderId) {
         toast.success(result.message);
-        router.push(`/orders/${result.data.orderId}`);
+        router.push(`/profile/orders/${result.data.orderId}`);
       } else {
         toast.error(result.message);
       }
@@ -306,51 +306,47 @@ export function CheckoutForm({
                   </button>
                 </div>
 
-                {/* Pilih Layanan */}
-                {courierServices.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {courierServices.map((svc, idx) => (
-                      <label
-                        key={`${svc.code}-${svc.service}-${idx}`}
-                        className={`flex cursor-pointer items-center justify-between rounded-lg border p-3 text-sm transition ${
-                          selectedService?.service === svc.service &&
-                          selectedService?.code === svc.code
-                            ? "border-yellow-400 bg-yellow-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="courierService"
-                            checked={
-                              selectedService?.service === svc.service &&
-                              selectedService?.code === svc.code
-                            }
-                            onChange={() => setSelectedService(svc)}
-                            className="accent-yellow-400"
-                          />
-                          <div>
-                            <span className="font-medium text-gray-900">
-                              {svc.name}
-                            </span>
-                            <span className="ml-1 text-gray-500">
-                              {svc.service} — {svc.description}
-                            </span>
-                            {svc.etd && (
-                              <span className="ml-1 text-xs text-gray-400">
-                                ({svc.etd})
-                              </span>
-                            )}
+                        {/* Pilih Layanan */}
+                        {courierServices.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {courierServices.map((svc, idx) => (
+                              <label
+                                key={`${svc.code}-${svc.service}-${idx}`}
+                                className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition ${
+                                  selectedService?.service === svc.service &&
+                                  selectedService?.code === svc.code
+                                    ? "border-yellow-400 bg-yellow-50"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="courierService"
+                                  checked={
+                                    selectedService?.service === svc.service &&
+                                    selectedService?.code === svc.code
+                                  }
+                                  onChange={() => setSelectedService(svc)}
+                                  className="accent-yellow-400 mt-0.5 shrink-0"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    <span className="font-medium text-gray-900">
+                                      {svc.name}
+                                    </span>
+                                    <span className="text-gray-500">
+                                      {svc.service}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-400 truncate">{svc.description}{svc.etd && ` · ${svc.etd}`}</p>
+                                  <p className="mt-0.5 font-semibold text-gray-900 text-xs sm:text-sm">
+                                    Rp {svc.cost.toLocaleString("id-ID")}
+                                  </p>
+                                </div>
+                              </label>
+                            ))}
                           </div>
-                        </div>
-                        <span className="ml-3 flex-shrink-0 font-semibold text-gray-900">
-                          Rp {svc.cost.toLocaleString("id-ID")}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
+                        )}
               </div>
             )}
           </div>

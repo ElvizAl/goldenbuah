@@ -33,18 +33,21 @@ export function OrderCard({ order }: OrderCardProps) {
 
   return (
     <Link
-      href={`/orders/${order.id}`}
-      className="block rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md"
+      href={`/profile/orders/${order.id}`}
+      className="block rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm transition hover:shadow-md"
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          {order.fulfillmentType === "DELIVERY" ? (
-            <Truck className="h-4 w-4" />
-          ) : (
-            <Store className="h-4 w-4" />
-          )}
-          <span className="font-mono font-medium text-gray-800">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-full bg-neutral-50 px-3 py-1 text-xs font-bold text-neutral-600">
+            {order.fulfillmentType === "DELIVERY" ? (
+              <Truck className="h-3.5 w-3.5" />
+            ) : (
+              <Store className="h-3.5 w-3.5" />
+            )}
+            {order.fulfillmentType === "DELIVERY" ? "Pengiriman" : "Ambil di Toko"}
+          </span>
+          <span className="font-mono text-xs font-semibold text-neutral-500">
             {order.orderCode}
           </span>
         </div>
@@ -52,9 +55,9 @@ export function OrderCard({ order }: OrderCardProps) {
       </div>
 
       {/* Item Preview */}
-      <div className="mt-3 flex items-center gap-3">
+      <div className="flex items-center gap-3">
         {firstItem?.productImageUrl ? (
-          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border bg-gray-50">
+          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl border border-neutral-100 bg-neutral-50">
             <Image
               src={firstItem.productImageUrl}
               alt={firstItem.productName}
@@ -63,15 +66,15 @@ export function OrderCard({ order }: OrderCardProps) {
             />
           </div>
         ) : (
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border bg-gray-100">
-            <Package className="h-6 w-6 text-gray-400" />
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-neutral-100 bg-neutral-50">
+            <Package className="h-6 w-6 text-neutral-300" />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-gray-900">
+          <p className="truncate text-sm font-semibold text-neutral-800">
             {firstItem?.productName}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-neutral-400">
             {firstItem?.quantity} barang
             {extraCount > 0 && ` + ${extraCount} produk lainnya`}
           </p>
@@ -79,13 +82,13 @@ export function OrderCard({ order }: OrderCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="mt-3 flex items-center justify-between border-t pt-3">
-        <span className="text-xs text-gray-400">
+      <div className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-3">
+        <span className="text-xs text-neutral-400">
           {format(new Date(order.createdAt), "d MMM yyyy, HH:mm", {
             locale: id,
           })}
         </span>
-        <span className="text-sm font-semibold text-gray-900">
+        <span className="text-sm font-bold text-neutral-800">
           Rp {order.total.toLocaleString("id-ID")}
         </span>
       </div>

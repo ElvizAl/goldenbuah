@@ -19,15 +19,22 @@ export async function getFeaturedProducts(limit: number = 6) {
       },
       include: {
         category: true,
+        reviews: { select: { rating: true } },
       },
       take: limit,
     });
 
     // Convert Decimal fields to plain numbers for Client Component serialization
-    const serializedProducts = products.map((product) => ({
-      ...product,
-      price: Number(product.price),
-    }));
+    const serializedProducts = products.map((product) => {
+      const ratings = product.reviews.map((r) => r.rating);
+      const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+      return {
+        ...product,
+        price: Number(product.price),
+        avgRating,
+        reviewCount: ratings.length,
+      };
+    });
 
     return {
       success: true,
@@ -72,6 +79,7 @@ export async function getProducts(options?: { query?: string; categoryId?: strin
         },
         include: {
           category: true,
+          reviews: { select: { rating: true } },
         },
         take: limit,
         skip: skip,
@@ -79,10 +87,16 @@ export async function getProducts(options?: { query?: string; categoryId?: strin
     ]);
 
     // Convert Decimal fields to plain numbers for Client Component serialization
-    const serializedProducts = products.map((product) => ({
-      ...product,
-      price: Number(product.price),
-    }));
+    const serializedProducts = products.map((product) => {
+      const ratings = product.reviews.map((r) => r.rating);
+      const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+      return {
+        ...product,
+        price: Number(product.price),
+        avgRating,
+        reviewCount: ratings.length,
+      };
+    });
 
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -104,6 +118,41 @@ export async function getProducts(options?: { query?: string; categoryId?: strin
       message: "Gagal memuat produk.",
       data: [],
     };
+  }
+}
+
+export async function getProductBySlug(slug: string) {
+  try {
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        reviews: {
+          include: {
+            user: { select: { id: true, name: true, image: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    if (!product) return { success: false, message: "Produk tidak ditemukan.", data: null };
+
+    const ratings = product.reviews.map((r) => r.rating);
+    const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+
+    return {
+      success: true,
+      data: {
+        ...product,
+        price: Number(product.price),
+        avgRating,
+        reviewCount: ratings.length,
+      },
+    };
+  } catch (error) {
+    console.error("Get product by slug error:", error);
+    return { success: false, message: "Gagal memuat produk.", data: null };
   }
 }
 

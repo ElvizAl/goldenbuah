@@ -1,16 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Loader2 } from "lucide-react"
+import { Search, Loader2, Star } from "lucide-react"
 import Image from "next/image"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
+import Link from "next/link"
 import { Card, CardContent } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import { Input } from "@/shared/components/ui/input"
 import { ProductCategories } from "@/modules/product/components/product-categories"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/shared/components/ui/pagination"
 import { AddToCartButton } from "@/modules/cart/components/add-to-cart-button"
+import { getCategoryBadgeClass } from "@/shared/lib/category-color"
 
 function formatRupiah(value: number | string) {
     return new Intl.NumberFormat("id-ID", {
@@ -31,12 +33,15 @@ interface Category {
 interface Product {
     id: string
     name: string
+    slug: string
     description: string | null
     price: number
     stock: number
     imageUrl: string | null
     categoryId: string
     category?: Category | null
+    avgRating?: number | null
+    reviewCount?: number
 }
 
 interface ProductGridProps {
@@ -179,14 +184,17 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
                     <p className="text-sm mt-1">Coba gunakan kata kunci lain atau pilih kategori berbeda.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-x-8 gap-y-24 sm:grid-cols-2 lg:grid-cols-3 mt-16 md:mt-24">
+                <div className="grid grid-cols-1 gap-x-6 gap-y-20 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-24 lg:grid-cols-3 mt-16 md:mt-24">
                     {filteredProducts.map((product) => (
                         <Card
                             key={product.id}
                             className="relative h-60 flex flex-col justify-between overflow-visible rounded-[24px] border-none bg-[#e8e8e8] shadow-xs transition duration-300 hover:-translate-y-1 hover:shadow-md pt-12"
                         >
-                            {/* Product Image Circular Badge */}
-                            <div className="absolute -top-14 left-6 z-10 h-28 w-28 overflow-hidden rounded-full bg-black border-2 border-white shadow-md">
+                            {/* Product Image Circular Badge — links to detail */}
+                            <Link
+                                href={`/produk/${product.slug}`}
+                                className="absolute -top-14 left-6 z-10 block h-28 w-28 overflow-hidden rounded-full bg-black border-2 border-white shadow-md"
+                            >
                                 {product.imageUrl ? (
                                     <Image
                                         src={product.imageUrl}
@@ -200,16 +208,22 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
                                         N/A
                                     </div>
                                 )}
-                            </div>
+                            </Link>
 
                             {/* Badges container on the top right */}
-                            <div className="absolute right-5 top-5 flex items-center gap-3">
-                                <Badge className="rounded bg-blue-600 px-2.5 py-0.5 text-[10px] font-semibold text-white hover:bg-blue-600 border-none">
+                            <div className="absolute right-5 top-5 flex items-center gap-2">
+                                <Badge className={`rounded px-2.5 py-0.5 text-[10px] font-semibold ${getCategoryBadgeClass(product.category?.name ?? "")}`}>
                                     {product.category?.name ?? "Lainnya"}
                                 </Badge>
+                                {product.avgRating != null && (
+                                    <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-500">
+                                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                        {product.avgRating.toFixed(1)}
+                                    </span>
+                                )}
                                 {product.stock <= 5 && product.stock > 0 && (
                                     <Badge className="rounded bg-amber-500 px-2.5 py-0.5 text-[10px] font-semibold text-white border-none">
-                                        Stok Menipis
+                                        Menipis
                                     </Badge>
                                 )}
                                 {product.stock === 0 && (
@@ -221,9 +235,11 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
 
                             <CardContent className="p-6 pt-5 flex flex-col justify-between h-full w-full">
                                 <div className="mt-2">
-                                    <h3 className="text-2xl font-extrabold text-[#01BC1D]">
-                                        {product.name}
-                                    </h3>
+                                    <Link href={`/produk/${product.slug}`}>
+                                        <h3 className="text-2xl font-extrabold text-[#01BC1D] hover:underline">
+                                            {product.name}
+                                        </h3>
+                                    </Link>
 
                                     <p className="mt-2 text-xs font-medium leading-relaxed text-neutral-700 line-clamp-2">
                                         {product.description ?? "Buah segar berkualitas tinggi langsung untuk Anda."}
@@ -242,7 +258,7 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
                                             {formatRupiah(product.price)}/kg
                                         </p>
                                         <p className="text-[10px] text-neutral-500 -mt-0.5">
-                                            Stok: {product.stock > 0 ? `${product.stock} kg` : "Habis"}
+                                            {product.reviewCount ? `${product.reviewCount} ulasan` : `Stok: ${product.stock > 0 ? `${product.stock} kg` : "Habis"}`}
                                         </p>
                                     </div>
                                 </div>
