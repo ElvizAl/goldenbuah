@@ -1,6 +1,7 @@
 import Footer from "@/shared/components/layout/footer";
 import Navbar  from "@/shared/components/layout/navbar/navbar";
 import { FloatingShortcuts } from "@/shared/components/layout/floating-shortcuts";
+import { AiChatWidget } from "@/shared/components/layout/ai-chat-widget";
 
 interface Props {
     children: React.ReactNode;
@@ -15,6 +16,7 @@ const Layout = ({children}: Props) => {
         <Footer />
         </div>
         <FloatingShortcuts />
+        <AiChatWidget />
     </div>
   )
 }

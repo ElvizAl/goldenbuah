@@ -80,7 +80,7 @@ export function UserNav() {
         {isAdmin && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/admin" className="cursor-pointer flex items-center font-medium text-emerald-600 focus:text-emerald-700">
+              <Link href="/admin/dashboard" className="cursor-pointer flex items-center font-medium text-emerald-600 focus:text-emerald-700">
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 Admin Panel
               </Link>

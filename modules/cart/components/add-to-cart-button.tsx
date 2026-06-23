@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ShoppingCart, Plus, Loader2 } from "lucide-react";
+import { ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -59,7 +59,7 @@ export function AddToCartButton({
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <Plus className="h-4 w-4" />
+          <ShoppingCart className="h-4 w-4" />
         )}
       </button>
     );
