@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import prisma from "@/shared/lib/prisma";
 
-const STORE_URL = "https://goldenbuah.vercel.app";
+const STORE_URL = "https://goldenbuah.vercel.app/produk";
 
 const QUERY_STOP_WORDS = new Set([
   "apa",
