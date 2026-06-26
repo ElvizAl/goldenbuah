@@ -4,7 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { getCategoriesTool, searchProductsTool } from "@/lib/agent/tools";
 
 const openrouter = createOpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
+  baseURL: "https://api.tokenrouter.com/v1",
   apiKey: process.env.OPENROUTER_API_KEY ?? "",
 });
 
@@ -13,21 +13,24 @@ const tools = {
   searchProducts: searchProductsTool,
 };
 
-const PRODUCT_INTENT_TERMS = [
+const MEMORY_USER_TURNS = 3;
+
+const NEED_TOPIC_PATTERNS = [
+  { topic: "kebutuhan:hamil", pattern: /\b(hamil|kehamilan|ibu hamil)\b/i },
+  { topic: "kebutuhan:anak", pattern: /\b(anak|balita|bayi|usia\s+\d+)\b/i },
+  { topic: "kebutuhan:diet", pattern: /\b(diet|turun berat|rendah kalori)\b/i },
+  { topic: "kebutuhan:imun", pattern: /\b(imun|daya tahan|kekebalan)\b/i },
+  { topic: "kebutuhan:jerawat", pattern: /\b(jerawat|kulit berjerawat)\b/i },
+] as const;
+
+const FRUIT_TOPIC_TERMS = [
   "alpukat",
   "anggur",
   "apel",
   "belimbing",
-  "buah",
-  "diet",
   "durian",
-  "harga",
-  "hamil",
-  "imun",
   "jambu",
-  "jerawat",
   "jeruk",
-  "jus",
   "kelapa",
   "kelengkeng",
   "kiwi",
@@ -39,12 +42,23 @@ const PRODUCT_INTENT_TERMS = [
   "pepaya",
   "pir",
   "pisang",
-  "produk",
-  "rekomendasi",
   "sawo",
-  "sehat",
   "semangka",
   "sirsak",
+] as const;
+
+const PRODUCT_INTENT_TERMS = [
+  ...FRUIT_TOPIC_TERMS,
+  "buah",
+  "diet",
+  "harga",
+  "hamil",
+  "imun",
+  "jerawat",
+  "jus",
+  "produk",
+  "rekomendasi",
+  "sehat",
   "stok",
   "usia",
 ];
@@ -71,6 +85,100 @@ function getLatestUserMessageText(messages: UIMessage[]) {
   return latestUserMessage ? getMessageText(latestUserMessage).toLowerCase() : "";
 }
 
+function getSlidingWindowMessages(
+  messages: UIMessage[],
+  maxUserTurns = MEMORY_USER_TURNS,
+) {
+  let userTurns = 0;
+  let startIndex = messages.length;
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role !== "user") continue;
+
+    userTurns += 1;
+    startIndex = index;
+
+    if (userTurns === maxUserTurns) break;
+  }
+
+  return messages.slice(startIndex);
+}
+
+function getExplicitTopics(text: string) {
+  const topics = new Set<string>();
+  const normalizedText = text.toLowerCase();
+
+  for (const { topic, pattern } of NEED_TOPIC_PATTERNS) {
+    if (pattern.test(normalizedText)) topics.add(topic);
+  }
+
+  const categoryMatch = normalizedText.match(
+    /\b(?:kategori\s+)?(buah[-\s]+(?:import|lokal|musiman|tropis))\b/i,
+  );
+  if (categoryMatch) {
+    topics.add(`kategori:${categoryMatch[1].replace(/\s+/g, "-")}`);
+  } else if (/\b(lihat|tampilkan|daftar)\s+kategori\b/i.test(normalizedText)) {
+    topics.add("kategori:daftar");
+  }
+
+  for (const fruit of FRUIT_TOPIC_TERMS) {
+    if (normalizedText.includes(fruit)) topics.add(`buah:${fruit}`);
+  }
+
+  return topics;
+}
+
+function haveSharedTopic(left: Set<string>, right: Set<string>) {
+  return [...left].some((topic) => right.has(topic));
+}
+
+function getTopicsByPrefix(topics: Set<string>, prefix: string) {
+  return new Set([...topics].filter((topic) => topic.startsWith(prefix)));
+}
+
+function hasTopicChanged(
+  latestTopics: Set<string>,
+  previousTopics: Set<string>,
+) {
+  const latestNeeds = getTopicsByPrefix(latestTopics, "kebutuhan:");
+  const previousNeeds = getTopicsByPrefix(previousTopics, "kebutuhan:");
+
+  if (latestNeeds.size > 0 && previousNeeds.size > 0) {
+    return !haveSharedTopic(latestNeeds, previousNeeds);
+  }
+
+  return !haveSharedTopic(latestTopics, previousTopics);
+}
+
+function getMessagesWithTopicReset(messages: UIMessage[]) {
+  const windowMessages = getSlidingWindowMessages(messages);
+  const latestUserIndex = windowMessages.findLastIndex(
+    (message) => message.role === "user",
+  );
+
+  if (latestUserIndex < 0) return windowMessages;
+
+  const latestTopics = getExplicitTopics(
+    getMessageText(windowMessages[latestUserIndex]),
+  );
+  if (latestTopics.size === 0) return windowMessages;
+
+  for (let index = latestUserIndex - 1; index >= 0; index -= 1) {
+    if (windowMessages[index].role !== "user") continue;
+
+    const previousTopics = getExplicitTopics(
+      getMessageText(windowMessages[index]),
+    );
+    if (previousTopics.size === 0) continue;
+
+    return hasTopicChanged(latestTopics, previousTopics)
+      ? windowMessages.slice(latestUserIndex)
+      : windowMessages;
+  }
+
+  return windowMessages;
+}
+
 function getForcedTool(userText: string) {
   if (!userText) return null;
 
@@ -91,18 +199,20 @@ function getForcedTool(userText: string) {
 
 export async function POST(req: Request) {
   const { messages } = (await req.json()) as { messages: UIMessage[] };
-  const latestUserMessage = getLatestUserMessage(messages);
   const forcedTool = getForcedTool(getLatestUserMessageText(messages));
-  const messagesForModel = latestUserMessage ? [latestUserMessage] : messages;
+  const messagesForModel = getMessagesWithTopicReset(messages);
 
   const result = streamText({
-    model: openrouter("google/gemini-3.1-flash-lite"),
+    model: openrouter("openai/gpt-5.5"),
     stopWhen: stepCountIs(3),
     system: `Kamu adalah asisten toko buah segar "Golden Buah" yang ramah dan membantu.
 
 ATURAN:
 - Selalu jawab dalam Bahasa Indonesia yang santai dan hangat.
-- Jawab hanya berdasarkan pesan user terbaru. Jangan mengulang topik dari pesan sebelumnya jika user sudah bertanya hal baru.
+- Kamu menerima memori sliding window yang berisi maksimal ${MEMORY_USER_TURNS} giliran user terakhir.
+- Sistem otomatis membuang memori lama ketika mendeteksi topik eksplisit baru yang berbeda.
+- Pesan user terbaru selalu menjadi instruksi utama. Gunakan pesan sebelumnya hanya untuk memahami referensi lanjutan seperti "yang lebih murah", "yang tadi", "tambah dua", atau "kategori itu".
+- Jika pesan terbaru memperkenalkan kebutuhan, buah, atau kategori baru, anggap topik sebelumnya sudah selesai. Jangan mengulang kebutuhan atau hasil produk dari topik lama.
 - Ketika user bertanya tentang buah, manfaat, atau rekomendasi, berikan deskripsi singkat dan informatif, lalu gunakan tool searchProducts untuk menampilkan produk yang relevan dari toko.
 - Ketika user ingin tahu kategori buah yang tersedia, gunakan tool getCategories.
 - Jika user menulis "Tampilkan produk kategori [slug]", panggil searchProducts dengan categorySlug sesuai slug tersebut dan jangan panggil getCategories.

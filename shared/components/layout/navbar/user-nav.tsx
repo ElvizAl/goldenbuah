@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -13,11 +14,20 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
-import { LogOut, Settings, Package, ShoppingCart, ShieldCheck } from "lucide-react";
+import { LogOut, Settings, Package, ShieldCheck } from "lucide-react";
 import { authClient } from "@/modules/auth/auth-client";
+
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export function UserNav() {
   const router = useRouter();
+  const isHydrated = useSyncExternalStore(
+    emptySubscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const { data: session, isPending } = authClient.useSession();
 
   async function handleLogout() {
@@ -37,7 +47,7 @@ export function UserNav() {
     }
   }
 
-  if (isPending) {
+  if (!isHydrated || isPending) {
     return <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />;
   }
 

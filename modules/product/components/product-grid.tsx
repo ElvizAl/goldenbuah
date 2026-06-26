@@ -69,8 +69,17 @@ export const ProductGrid = ({ initialProducts, categories, initialQuery = "", in
 
     // Debounce search update to URL
     useEffect(() => {
+        const urlQuery = searchParams.get("query") ?? ""
+        const urlCategoryId = searchParams.get("categoryId") ?? ""
+        const localCategoryId = selectedCategoryId ?? ""
+
+        // A page-only navigation must not reset pagination back to page 1.
+        if (search === urlQuery && localCategoryId === urlCategoryId) {
+            return
+        }
+
         const debounceTimer = setTimeout(() => {
-            const params = new URLSearchParams(searchParams)
+            const params = new URLSearchParams(searchParams.toString())
             
             if (search) {
                 params.set("query", search)
